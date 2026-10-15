@@ -32,8 +32,10 @@ def clean(s):
 def fetch(url):
     import requests
     r = requests.get(url, timeout=30, headers={
-        "User-Agent": "Mozilla/5.0 (compatible; lany-kalendar/1.0)",
-        "Accept-Language": "cs",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "cs-CZ,cs;q=0.9,en;q=0.8",
+        "Referer": "https://www.sipky.org/",
     })
     r.raise_for_status()
     return r.content, (r.encoding or "windows-1250")
