@@ -137,6 +137,21 @@ RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU
 END:STANDARD
 END:VTIMEZONE""".split("\n")
 
+def prev_result(matches, i):
+    """Výsledek posledního odehraného zápasu se stejným soupeřem (z pohledu Lán)."""
+    m = matches[i]
+    opp = m["away"] if m["is_home"] else m["home"]
+    for p in reversed(matches[:i]):
+        popp = p["away"] if p["is_home"] else p["home"]
+        if popp == opp and p["score"]:
+            ours, theirs = p["score"] if p["is_home"] else p["score"][::-1]
+            word = "výhra" if ours > theirs else "prohra" if ours < theirs else "remíza"
+            where = "doma" if p["is_home"] else "venku"
+            d = p["start"]
+            return (f"Minulý zápas ({d.day}.{d.month}.{d.year}, {where}): "
+                    f"{word} {ours}:{theirs}")
+    return None
+
 
 def build_ics(matches):
     now = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
@@ -146,7 +161,7 @@ def build_ics(matches):
          "X-WR-TIMEZONE:Europe/Prague",
          "REFRESH-INTERVAL;VALUE=DURATION:PT6H", "X-PUBLISHED-TTL:PT6H"]
     L += VTIMEZONE
-    for m in matches:
+    for i, m in enumerate(matches):
         end = m["start"] + timedelta(hours=MATCH_HOURS)
         opp = m["away"] if m["is_home"] else m["home"]
         title = (f"🏠 DOMA – {opp}" if m["is_home"] else f"🚗 VENKU – {opp}")
@@ -156,6 +171,9 @@ def build_ics(matches):
         desc.append("Hrajeme doma" if m["is_home"] else "Hrajeme venku")
         if m["score"]:
             desc.append(f"Výsledek: {m['score'][0]}:{m['score'][1]}")
+        prev = prev_result(matches, i)
+        if prev:
+            desc.append(prev)        
         desc.append(m["url"])
         L += ["BEGIN:VEVENT",
               f"UID:zapas-{m['id']}@sipky.org",
